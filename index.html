@@ -21,7 +21,7 @@
       /* ── 반응형 크기: 모든 수치를 --dw 하나에서 파생 ──
          clamp(최소, 기준, 최대)
          11vw 기준 → 폰(375px)에서 약 41px, 데스크탑에서 98px로 고정 */
-      --dw:  clamp(40px, 11vw, 98px);   /* 카드 너비 */
+      --dw:  clamp(34px, 9vw, 98px);    /* 카드 너비 */
       --dh:  calc(var(--dw) * 1.4);     /* 카드 높이  (137/98) */
       --dhh: calc(var(--dw) * 0.7);     /* 카드 절반  (68.5/98) */
       --dfs: calc(var(--dw) * 1.08);    /* 숫자 폰트  (106/98) */
@@ -45,6 +45,7 @@
 
     body {
       min-height: 100vh;
+      min-height: 100dvh; /* Safari: 주소창 제외한 실제 뷰포트 높이로 정확히 중앙 정렬 */
       background: var(--bg);
       display: flex;
       flex-direction: column;
@@ -53,6 +54,7 @@
       font-family: 'Trebuchet MS', Arial, sans-serif;
       transition: background .4s;
       user-select: none;
+      overflow-x: hidden; /* 가로 스크롤 방지 */
     }
 
     /* ── Controls ── */
@@ -73,6 +75,8 @@
       font-weight: bold;
       letter-spacing: .4px;
       transition: background .3s, color .3s;
+      touch-action: manipulation; /* 카카오톡 등 WebView: 300ms 탭 지연 제거 */
+      -webkit-tap-highlight-color: transparent; /* iOS 탭 시 파란 하이라이트 제거 */
     }
     .ctrl button:hover { background: var(--btn2); }
     #fs { padding: 9px 12px; display: flex; align-items: center; justify-content: center; }
@@ -169,7 +173,9 @@
       border-radius: var(--dbr) var(--dbr) 0 0;
       border-bottom: 1.5px solid var(--line);
       transform-origin: bottom center;
+      -webkit-transform-origin: bottom center;
       backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     /* .fa is flat (0°) at rest — it IS the top display */
     /* .fta starts hidden at 90° — will rotate in */
@@ -180,7 +186,9 @@
       bottom: 0;
       border-radius: 0 0 var(--dbr) var(--dbr);
       transform-origin: top center;
+      -webkit-transform-origin: top center;
       backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
     /* .sb is flat (0°) at rest — it IS the bottom display */
     /* .fb starts hidden at 90° — will rotate in */
@@ -396,19 +404,30 @@ tick();
 setInterval(tick, 1000);
 
 /* ── Fullscreen button ── */
-document.getElementById('fs').onclick = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
-  } else {
-    document.exitFullscreen();
-  }
+/* requestFullscreen이 없는 WebView(카카오톡 등)에서는 조용히 무시 */
+const fsBtn = document.getElementById('fs');
+const svgEnter = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4"/><path d="M21 7V3h-4"/><path d="M3 17v4h4"/><path d="M21 17v4h-4"/></svg>`;
+const svgExit  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>`;
+
+const reqFS  = document.documentElement.requestFullscreen?.bind(document.documentElement)
+            || document.documentElement.webkitRequestFullscreen?.bind(document.documentElement);
+const exitFS = document.exitFullscreen?.bind(document)
+            || document.webkitExitFullscreen?.bind(document);
+
+fsBtn.onclick = () => {
+  if (!reqFS) return; // 지원 안 하는 환경이면 아무것도 안 함
+  try {
+    const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+    isFs ? exitFS?.() : reqFS?.()?.catch?.(() => {});
+  } catch (e) {}
 };
 
-document.addEventListener('fullscreenchange', () => {
-  document.getElementById('fs').innerHTML = document.fullscreenElement
-    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>`
-    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4"/><path d="M21 7V3h-4"/><path d="M3 17v4h4"/><path d="M21 17v4h-4"/></svg>`;
-});
+function onFsChange() {
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  fsBtn.innerHTML = isFs ? svgExit : svgEnter;
+}
+document.addEventListener('fullscreenchange', onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange); /* Safari */
 </script>
 </body>
 </html>
