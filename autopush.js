@@ -15,33 +15,29 @@ const DELAY = 1500; // 저장 후 1.5초 대기 (연속 저장 방지)
 let timer = null;
 const watchers = new Map(); // 파일별 watcher 관리
 
-function timestamp() {
-  return new Date().toLocaleString('ko-KR', { hour12: false });
-}
-
 function scheduleAutoPush() {
   clearTimeout(timer);
   timer = setTimeout(autoPush, DELAY);
 }
 
 function autoPush() {
+  const ts = new Date().toLocaleString('ko-KR', { hour12: false });
   try {
     const status = execSync('git status --porcelain', { cwd: DIR }).toString().trim();
     if (!status) return; // 변경 없으면 조용히 스킵
 
     // 변경된 파일 목록 출력
     const changed = status.split('\n').map(l => l.slice(3).trim()).join(', ');
-    console.log(`[${timestamp()}] 변경: ${changed}`);
-    console.log(`[${timestamp()}] 커밋 & 푸시 중...`);
+    console.log(`[${ts}] 변경: ${changed}`);
+    console.log(`[${ts}] 커밋 & 푸시 중...`);
 
-    const msg = `Auto-update ${new Date().toLocaleString('ko-KR', { hour12: false })}`;
-    execSync('git add -A',             { cwd: DIR, stdio: 'inherit' });
-    execSync(`git commit -m "${msg}"`, { cwd: DIR, stdio: 'inherit' });
-    execSync('git push',               { cwd: DIR, stdio: 'inherit' });
+    execSync('git add -A',                          { cwd: DIR, stdio: 'inherit' });
+    execSync(`git commit -m "Auto-update ${ts}"`,   { cwd: DIR, stdio: 'inherit' });
+    execSync('git push',                            { cwd: DIR, stdio: 'inherit' });
 
-    console.log(`[${timestamp()}] ✓ 완료 → https://wsjryan.github.io/proj1-flipclock/\n`);
+    console.log(`[${ts}] ✓ 완료 → https://wsjryan.github.io/proj1-flipclock/\n`);
   } catch (err) {
-    console.error(`[${timestamp()}] ✗ 오류:`, err.message);
+    console.error(`[${ts}] ✗ 오류:`, err.message);
   }
 }
 
@@ -69,13 +65,14 @@ fs.watch(DIR, (event, filename) => {
   if (!filename || filename.startsWith('.')) return; // .git 등 숨김 무시
   const filepath = path.join(DIR, filename);
 
-  if (fs.existsSync(filepath) && fs.statSync(filepath).isFile()) {
-    startWatchingFile(filepath); // 새 파일 → 감시 시작
-    scheduleAutoPush();
-  } else {
-    stopWatchingFile(filepath);  // 삭제된 파일 → 감시 종료
-    scheduleAutoPush();
+  try {
+    if (fs.statSync(filepath).isFile()) {
+      startWatchingFile(filepath); // 새 파일 → 감시 시작
+    }
+  } catch (_) {
+    stopWatchingFile(filepath);    // 삭제된 파일 → 감시 종료
   }
+  scheduleAutoPush();
 });
 
 // ── 기존 파일 감시 시작 ──

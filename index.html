@@ -29,6 +29,7 @@
       --dbr: calc(var(--dw) * 0.112);   /* border-radius (11/98) */
       --gcl: calc(var(--dw) * 0.143);   /* .clock gap (14/98) */
       --ggr: calc(var(--dw) * 0.071);   /* .grp gap   (7/98) */
+      --dlsp: clamp(1px, 0.5vw, 3px);   /* date/credit letter-spacing */
     }
     body.light {
       --bg:   #dcdcdc;
@@ -85,7 +86,7 @@
     .date {
       color: var(--dim);
       font-size: clamp(13px, 3.5vw, 24px);
-      letter-spacing: clamp(1px, 0.5vw, 3px);
+      letter-spacing: var(--dlsp);
       margin-bottom: clamp(20px, 5vw, 46px);
       font-family: Arial, sans-serif;
       font-weight: normal;
@@ -115,7 +116,7 @@
       gap: 10px;
       color: var(--dim);
       font-size: clamp(10px, 2vw, 14px);
-      letter-spacing: clamp(1px, 0.5vw, 3px);
+      letter-spacing: var(--dlsp);
       margin-top: clamp(16px, 4vw, 36px);
       font-family: 'Playfair Display', serif;
       font-style: italic;
@@ -279,6 +280,15 @@ function mkDigit(id) {
     <div class="fta"><span>0</span></div>
     <div class="sb"><span>0</span></div>
     <div class="fb"><span>0</span></div>`;
+  // Cache child refs to avoid repeated querySelector calls in flipTo
+  el._fa  = el.querySelector('.fa');
+  el._fta = el.querySelector('.fta');
+  el._sb  = el.querySelector('.sb');
+  el._fb  = el.querySelector('.fb');
+  el._faS  = el._fa.querySelector('span');
+  el._ftaS = el._fta.querySelector('span');
+  el._sbS  = el._sb.querySelector('span');
+  el._fbS  = el._fb.querySelector('span');
   return el;
 }
 
@@ -304,18 +314,15 @@ function flipTo(el, nv) {
   const ov = el.dataset.v;
   el.dataset.v = sv;
 
-  const fa  = el.querySelector('.fa');
-  const fta = el.querySelector('.fta');
-  const sb  = el.querySelector('.sb');
-  const fb  = el.querySelector('.fb');
+  const { _fa: fa, _fta: fta, _sb: sb, _faS: faS, _ftaS: ftaS, _sbS: sbS, _fbS: fbS } = el;
 
   // fa  shows old top  (will rotate out 0°→-90°)
-  fa.querySelector('span').textContent  = ov;
+  faS.textContent  = ov;
   // fta shows new top  (will rotate in  90°→0°, delayed)
-  fta.querySelector('span').textContent = sv;
+  ftaS.textContent = sv;
   // sb  still shows old bottom (visible during phase 1)
   // fb  shows new bottom (will rotate in 90°→0°, delayed)
-  fb.querySelector('span').textContent  = sv;
+  fbS.textContent  = sv;
 
   /* ── WHY this is overlap-free ──
    * Phase 1 (0–280ms):
@@ -338,13 +345,13 @@ function flipTo(el, nv) {
 
   // At the midpoint fb starts covering sb → safe to update sb now
   setTimeout(() => {
-    sb.querySelector('span').textContent = sv;
+    sbS.textContent = sv;
   }, 290);
 
   // After all animations finish: reset state
   setTimeout(() => {
     // Update fa's content so it's ready for the next flip at 0°
-    fa.querySelector('span').textContent = sv;
+    faS.textContent = sv;
     el.classList.remove('go');
     // After class removal:
     //   fa  snaps -90°→0° (now shows sv) — matches what fta was showing  ✓
@@ -418,7 +425,7 @@ fsBtn.onclick = () => {
   if (!reqFS) return; // 지원 안 하는 환경이면 아무것도 안 함
   try {
     const isFs = document.fullscreenElement || document.webkitFullscreenElement;
-    isFs ? exitFS?.() : reqFS?.()?.catch?.(() => {});
+    isFs ? exitFS() : reqFS()?.catch(() => {});
   } catch (e) {}
 };
 
