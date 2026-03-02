@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400&display=swap" rel="stylesheet">
   <style>
     :root {
+      /* ── 색상 ── */
       --bg:   #111111;
       --card: #252525;
       --text: #ffffff;
@@ -16,6 +17,18 @@
       --btn:  #333333;
       --btn2: #444444;
       --shadow: rgba(0,0,0,.55);
+
+      /* ── 반응형 크기: 모든 수치를 --dw 하나에서 파생 ──
+         clamp(최소, 기준, 최대)
+         11vw 기준 → 폰(375px)에서 약 41px, 데스크탑에서 98px로 고정 */
+      --dw:  clamp(40px, 11vw, 98px);   /* 카드 너비 */
+      --dh:  calc(var(--dw) * 1.4);     /* 카드 높이  (137/98) */
+      --dhh: calc(var(--dw) * 0.7);     /* 카드 절반  (68.5/98) */
+      --dfs: calc(var(--dw) * 1.08);    /* 숫자 폰트  (106/98) */
+      --dpr: calc(var(--dw) * 4.3);     /* perspective (420/98) */
+      --dbr: calc(var(--dw) * 0.112);   /* border-radius (11/98) */
+      --gcl: calc(var(--dw) * 0.143);   /* .clock gap (14/98) */
+      --ggr: calc(var(--dw) * 0.071);   /* .grp gap   (7/98) */
     }
     body.light {
       --bg:   #dcdcdc;
@@ -67,9 +80,9 @@
     /* ── Date ── */
     .date {
       color: var(--dim);
-      font-size: 24px;
-      letter-spacing: 3px;
-      margin-bottom: 46px;
+      font-size: clamp(13px, 3.5vw, 24px);
+      letter-spacing: clamp(1px, 0.5vw, 3px);
+      margin-bottom: clamp(20px, 5vw, 46px);
       font-family: Arial, sans-serif;
       font-weight: normal;
       transition: color .4s;
@@ -79,16 +92,16 @@
     .clock {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: var(--gcl);
     }
-    .grp { display: flex; gap: 7px; }
+    .grp { display: flex; gap: var(--ggr); }
 
     .colon {
-      font-size: 106px;
+      font-size: var(--dfs);
       font-weight: 900;
       color: var(--text);
       line-height: 1;
-      padding-bottom: 12px;
+      padding-bottom: calc(var(--dw) * 0.12);
       transition: color .4s;
     }
 
@@ -97,17 +110,17 @@
       align-items: center;
       gap: 10px;
       color: var(--dim);
-      font-size: 14px;
-      letter-spacing: 3px;
-      margin-top: 36px;
+      font-size: clamp(10px, 2vw, 14px);
+      letter-spacing: clamp(1px, 0.5vw, 3px);
+      margin-top: clamp(16px, 4vw, 36px);
       font-family: 'Playfair Display', serif;
       font-style: italic;
       font-weight: 300;
       transition: color .4s;
     }
     .credit-logo {
-      width: 28px;
-      height: 28px;
+      width: clamp(18px, 4vw, 28px);
+      height: clamp(18px, 4vw, 28px);
       border-radius: 50%;
       opacity: 0.6;
       transition: opacity .3s;
@@ -115,12 +128,12 @@
     .credit-logo:hover { opacity: 1; }
 
     .ap {
-      font-size: 26px;
+      font-size: calc(var(--dw) * 0.265);
       font-weight: bold;
       color: var(--text);
       align-self: flex-end;
-      padding-bottom: 17px;
-      min-width: 55px;
+      padding-bottom: calc(var(--dw) * 0.173);
+      min-width: calc(var(--dw) * 0.561);
       transition: color .4s;
     }
 
@@ -134,17 +147,17 @@
     ══════════════════════════ */
     .d {
       position: relative;
-      width: 98px;
-      height: 137px;
-      perspective: 420px;
-      border-radius: 11px;
+      width: var(--dw);
+      height: var(--dh);
+      perspective: var(--dpr);
+      border-radius: var(--dbr);
       box-shadow: 0 6px 18px var(--shadow);
     }
 
     /* ── Shared half styles ── */
     .d .fa, .d .fta, .d .sb, .d .fb {
       position: absolute;
-      left: 0; width: 100%; height: 68.5px;
+      left: 0; width: 100%; height: var(--dhh);
       overflow: hidden;
       background: var(--card);
       transition: background .4s;
@@ -153,7 +166,7 @@
     /* ── Top halves ── */
     .d .fa, .d .fta {
       top: 0;
-      border-radius: 11px 11px 0 0;
+      border-radius: var(--dbr) var(--dbr) 0 0;
       border-bottom: 1.5px solid var(--line);
       transform-origin: bottom center;
       backface-visibility: hidden;
@@ -165,7 +178,7 @@
     /* ── Bottom halves ── */
     .d .sb, .d .fb {
       bottom: 0;
-      border-radius: 0 0 11px 11px;
+      border-radius: 0 0 var(--dbr) var(--dbr);
       transform-origin: top center;
       backface-visibility: hidden;
     }
@@ -178,15 +191,15 @@
       display: block;
       width: 100%;
       text-align: center;
-      font-size: 106px;
+      font-size: var(--dfs);
       font-weight: 900;
       color: var(--text);
-      line-height: 137px;   /* full card height; each half clips to its portion */
+      line-height: var(--dh);   /* full card height; each half clips to its portion */
       transition: color .4s;
     }
     /* Bottom halves: shift up so the lower portion of the digit is visible */
     .d .sb span,
-    .d .fb span { margin-top: -68.5px; }
+    .d .fb span { margin-top: calc(var(--dhh) * -1); }
 
     /* ── Subtle depth gradient ── */
     .d .fa::after, .d .fta::after {
